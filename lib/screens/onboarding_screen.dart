@@ -14,6 +14,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:desktop_webview_auth/desktop_webview_auth.dart';
 import 'package:desktop_webview_auth/google.dart';
 import 'package:flutter/services.dart';
+
 // localization
 import 'package:talabak_users/l10n/app_localizations.dart';
 import 'package:talabak_users/main.dart' show TalabakApp; // used to set locale
@@ -31,6 +32,7 @@ const String _kLocalRedirectUri = 'http://localhost:8585/';
 class SignInException implements Exception {
   final String code;
   final String message;
+
   SignInException(this.code, this.message);
 
   @override
@@ -42,7 +44,10 @@ String _generateNonce([int length = 32]) {
   const charset =
       '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
   final random = Random.secure();
-  return List.generate(length, (_) => charset[random.nextInt(charset.length)]).join();
+  return List.generate(
+    length,
+    (_) => charset[random.nextInt(charset.length)],
+  ).join();
 }
 
 String _sha256ofString(String input) {
@@ -66,23 +71,33 @@ Future<UserCredential?> signInWithGoogle() async {
       debugPrint("[WEB] Detected Web platform. Signing in with popup...");
       try {
         final GoogleAuthProvider authProvider = GoogleAuthProvider();
-        userCredential = await FirebaseAuth.instance.signInWithPopup(authProvider);
-        debugPrint("[WEB] signInWithPopup returned user: ${userCredential.user?.email}");
+        userCredential = await FirebaseAuth.instance.signInWithPopup(
+          authProvider,
+        );
+        debugPrint(
+          "[WEB] signInWithPopup returned user: ${userCredential.user?.email}",
+        );
       } on FirebaseAuthException catch (e, st) {
         debugPrint("[WEB][ERROR] Firebase web signInWithPopup failed: $e");
         debugPrint(st.toString());
-        throw SignInException('web_auth_failed',
-            e.message ?? 'Failed to sign in with Google (web).');
+        throw SignInException(
+          'web_auth_failed',
+          e.message ?? 'Failed to sign in with Google (web).',
+        );
       } catch (e, st) {
         debugPrint("[WEB][ERROR] Unexpected web sign-in error: $e");
         debugPrint(st.toString());
-        throw SignInException('web_unexpected',
-            'Unexpected error during Google sign-in (web).');
+        throw SignInException(
+          'web_unexpected',
+          'Unexpected error during Google sign-in (web).',
+        );
       }
 
       // ----- CASE 2: DESKTOP (Windows / macOS / Linux) -----
     } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-      debugPrint("[DESKTOP] Detected Desktop platform. Starting desktop OAuth flow...");
+      debugPrint(
+        "[DESKTOP] Detected Desktop platform. Starting desktop OAuth flow...",
+      );
 
       final args = GoogleSignInArgs(
         clientId: _kGoogleWebClientId,
@@ -91,85 +106,138 @@ Future<UserCredential?> signInWithGoogle() async {
       );
 
       try {
-        debugPrint("[DESKTOP] Opening sign-in window (desktop_webview_auth)...");
+        debugPrint(
+          "[DESKTOP] Opening sign-in window (desktop_webview_auth)...",
+        );
         final result = await DesktopWebviewAuth.signIn(args);
 
         if (result == null) {
-          debugPrint("[DESKTOP][INFO] User cancelled Google Sign-In (Desktop).");
+          debugPrint(
+            "[DESKTOP][INFO] User cancelled Google Sign-In (Desktop).",
+          );
           return null; // user cancelled -> not an error
         }
 
         // Basic validation of tokens presence
         if ((result.accessToken == null || result.accessToken!.isEmpty) &&
             (result.idToken == null || result.idToken!.isEmpty)) {
-          debugPrint("[DESKTOP][ERROR] No tokens returned from OAuth provider.");
-          throw SignInException('no_tokens', 'No tokens returned from OAuth provider.');
+          debugPrint(
+            "[DESKTOP][ERROR] No tokens returned from OAuth provider.",
+          );
+          throw SignInException(
+            'no_tokens',
+            'No tokens returned from OAuth provider.',
+          );
         }
 
         // Exchange tokens with Firebase
         try {
-          debugPrint("[DESKTOP] Creating Google credential and signing in to Firebase...");
+          debugPrint(
+            "[DESKTOP] Creating Google credential and signing in to Firebase...",
+          );
           final credential = GoogleAuthProvider.credential(
             accessToken: result.accessToken,
             idToken: result.idToken,
           );
 
-          userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
-          debugPrint("[DESKTOP] Firebase sign-in successful: ${userCredential.user?.email}");
+          userCredential = await FirebaseAuth.instance.signInWithCredential(
+            credential,
+          );
+          debugPrint(
+            "[DESKTOP] Firebase sign-in successful: ${userCredential.user?.email}",
+          );
         } on FirebaseAuthException catch (e, st) {
-          debugPrint("[DESKTOP][ERROR] Firebase signInWithCredential failed: $e");
+          debugPrint(
+            "[DESKTOP][ERROR] Firebase signInWithCredential failed: $e",
+          );
           debugPrint(st.toString());
-          throw SignInException('firebase_token_exchange_failed',
-              'Failed to sign in with the provided Google credential.');
+          throw SignInException(
+            'firebase_token_exchange_failed',
+            'Failed to sign in with the provided Google credential.',
+          );
         } catch (e, st) {
           debugPrint("[DESKTOP][ERROR] Unexpected error exchanging tokens: $e");
           debugPrint(st.toString());
-          throw SignInException('desktop_unexpected', 'Unexpected error during desktop sign-in.');
+          throw SignInException(
+            'desktop_unexpected',
+            'Unexpected error during desktop sign-in.',
+          );
         }
       } on MissingPluginException catch (e) {
-        debugPrint("[DESKTOP][ERROR] Missing plugin for desktop_webview_auth: $e");
-        throw SignInException('missing_plugin',
-            'Desktop sign-in not available: missing plugin or platform support.');
+        debugPrint(
+          "[DESKTOP][ERROR] Missing plugin for desktop_webview_auth: $e",
+        );
+        throw SignInException(
+          'missing_plugin',
+          'Desktop sign-in not available: missing plugin or platform support.',
+        );
       } catch (e, st) {
-        debugPrint("[DESKTOP][ERROR] Unexpected error during desktop OAuth flow: $e");
+        debugPrint(
+          "[DESKTOP][ERROR] Unexpected error during desktop OAuth flow: $e",
+        );
         debugPrint(st.toString());
-        throw SignInException('desktop_flow_error', 'Unexpected error during desktop sign-in.');
+        throw SignInException(
+          'desktop_flow_error',
+          'Unexpected error during desktop sign-in.',
+        );
       }
 
       // ----- CASE 3: MOBILE (Android / iOS) -----
     } else {
-      debugPrint("[MOBILE] Detected Mobile platform. Opening Google Sign-In via google_sign_in package...");
+      debugPrint(
+        "[MOBILE] Detected Mobile platform. Opening Google Sign-In via google_sign_in package...",
+      );
       try {
         final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
 
         if (googleUser == null) {
-          debugPrint("[MOBILE][INFO] Google Sign-In was cancelled by the user (mobile).");
+          debugPrint(
+            "[MOBILE][INFO] Google Sign-In was cancelled by the user (mobile).",
+          );
           return null;
         }
 
         debugPrint("[MOBILE] Google account selected: ${googleUser.email}");
 
-        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
 
         final credential = GoogleAuthProvider.credential(
           accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
         );
 
-        userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
-        debugPrint("[MOBILE] Firebase sign-in successful: ${userCredential.user?.email}");
+        userCredential = await FirebaseAuth.instance.signInWithCredential(
+          credential,
+        );
+        debugPrint(
+          "[MOBILE] Firebase sign-in successful: ${userCredential.user?.email}",
+        );
       } on PlatformException catch (e, st) {
-        debugPrint("[MOBILE][ERROR] PlatformException during mobile sign-in: $e");
+        debugPrint(
+          "[MOBILE][ERROR] PlatformException during mobile sign-in: $e",
+        );
         debugPrint(st.toString());
-        throw SignInException('mobile_platform_error', 'Failed to sign in on this device.');
+        throw SignInException(
+          'mobile_platform_error',
+          'Failed to sign in on this device.',
+        );
       } on FirebaseAuthException catch (e, st) {
         debugPrint("[MOBILE][ERROR] Firebase mobile signIn failed: $e");
         debugPrint(st.toString());
-        throw SignInException('firebase_mobile_failed', e.message ?? 'Firebase login failed.');
+        throw SignInException(
+          'firebase_mobile_failed',
+          e.message ?? 'Firebase login failed.',
+        );
       } catch (e, st) {
-        debugPrint("[MOBILE][ERROR] Unexpected error during mobile sign-in: $e");
+        debugPrint(
+          "[MOBILE][ERROR] Unexpected error during mobile sign-in: $e",
+        );
         debugPrint(st.toString());
-        throw SignInException('mobile_unexpected', 'Unexpected error during mobile sign-in.');
+        throw SignInException(
+          'mobile_unexpected',
+          'Unexpected error during mobile sign-in.',
+        );
       }
     }
 
@@ -178,14 +246,19 @@ Future<UserCredential?> signInWithGoogle() async {
     final user = userCredential.user;
     if (user == null) {
       debugPrint("[COMMON][ERROR] No Firebase user returned after sign-in.");
-      throw SignInException('no_user', 'No Firebase user returned after sign-in.');
+      throw SignInException(
+        'no_user',
+        'No Firebase user returned after sign-in.',
+      );
     }
 
     // Firebase ID token
     String? idToken;
     try {
       idToken = await user.getIdToken();
-      debugPrint("[COMMON] Firebase ID token retrieved: ${idToken != null && idToken.isNotEmpty}");
+      debugPrint(
+        "[COMMON] Firebase ID token retrieved: ${idToken != null && idToken.isNotEmpty}",
+      );
     } catch (e) {
       debugPrint("[COMMON][WARN] Failed to get Firebase ID token: $e");
       // not fatal for user sign-in, continue
@@ -200,14 +273,18 @@ Future<UserCredential?> signInWithGoogle() async {
           provider: supabase.OAuthProvider.google,
           idToken: idToken,
         );
-        debugPrint("[COMMON] Supabase sign-in finished. Session present: ${authResponse.session != null}");
+        debugPrint(
+          "[COMMON] Supabase sign-in finished. Session present: ${authResponse.session != null}",
+        );
       } catch (e, st) {
         debugPrint("[COMMON][WARN] Supabase signInWithIdToken failed: $e");
         debugPrint(st.toString());
         // don't fail the whole flow for Supabase sync problems
       }
     } else {
-      debugPrint("[COMMON][INFO] No idToken available, skipping Supabase sign-in.");
+      debugPrint(
+        "[COMMON][INFO] No idToken available, skipping Supabase sign-in.",
+      );
     }
 
     // Upsert into Supabase customers table (best-effort)
@@ -231,7 +308,10 @@ Future<UserCredential?> signInWithGoogle() async {
     // Re-throw SignInException or wrap unknown errors
     if (e is SignInException) rethrow;
     debugPrint("💥 [OUTER] Error during Google Sign-In (outer catch): $e");
-    throw SignInException('unexpected_outer', 'Unexpected error during sign-in.');
+    throw SignInException(
+      'unexpected_outer',
+      'Unexpected error during sign-in.',
+    );
   }
 }
 
@@ -252,11 +332,16 @@ Future<UserCredential?> signInWithApple() async {
         provider.addScope('email');
         provider.addScope('name');
         userCredential = await FirebaseAuth.instance.signInWithPopup(provider);
-        debugPrint("[WEB] Apple web popup returned user: ${userCredential.user?.email}");
+        debugPrint(
+          "[WEB] Apple web popup returned user: ${userCredential.user?.email}",
+        );
       } on FirebaseAuthException catch (e, st) {
         debugPrint("[WEB][ERROR] Apple web popup failed: $e");
         debugPrint(st.toString());
-        throw SignInException('web_auth_failed', e.message ?? 'Failed to sign in with Apple (web).');
+        throw SignInException(
+          'web_auth_failed',
+          e.message ?? 'Failed to sign in with Apple (web).',
+        );
       }
       // iOS native flow
     } else if (Platform.isIOS) {
@@ -272,35 +357,54 @@ Future<UserCredential?> signInWithApple() async {
         nonce: nonce,
       );
 
-      if (appleCredential.identityToken == null || appleCredential.identityToken!.isEmpty) {
+      if (appleCredential.identityToken == null ||
+          appleCredential.identityToken!.isEmpty) {
         debugPrint("[MOBILE][iOS][ERROR] No identity token from Apple.");
-        throw SignInException('no_token', 'No identity token returned from Apple.');
+        throw SignInException(
+          'no_token',
+          'No identity token returned from Apple.',
+        );
       }
 
-      final oauthCredential = OAuthProvider("apple.com").credential(
-        idToken: appleCredential.identityToken,
-        rawNonce: rawNonce,
-      );
+      final oauthCredential = OAuthProvider(
+        "apple.com",
+      ).credential(idToken: appleCredential.identityToken, rawNonce: rawNonce);
 
-      userCredential = await FirebaseAuth.instance.signInWithCredential(oauthCredential);
-      debugPrint("[MOBILE][iOS] Firebase sign-in successful: ${userCredential.user?.email}");
+      userCredential = await FirebaseAuth.instance.signInWithCredential(
+        oauthCredential,
+      );
+      debugPrint(
+        "[MOBILE][iOS] Firebase sign-in successful: ${userCredential.user?.email}",
+      );
     } else {
-      debugPrint("[PLATFORM] Apple Sign-In not supported on this platform in current implementation.");
-      throw SignInException('platform_not_supported', 'Apple Sign-In supported on iOS and Web only.');
+      debugPrint(
+        "[PLATFORM] Apple Sign-In not supported on this platform in current implementation.",
+      );
+      throw SignInException(
+        'platform_not_supported',
+        'Apple Sign-In supported on iOS and Web only.',
+      );
     }
 
     // Common post sign-in
     final user = userCredential.user;
     if (user == null) {
-      debugPrint("[COMMON][ERROR] No Firebase user returned after Apple sign-in.");
-      throw SignInException('no_user', 'No Firebase user returned after sign-in.');
+      debugPrint(
+        "[COMMON][ERROR] No Firebase user returned after Apple sign-in.",
+      );
+      throw SignInException(
+        'no_user',
+        'No Firebase user returned after sign-in.',
+      );
     }
 
     // Fetch idToken for Supabase sign-in
     String? idToken;
     try {
       idToken = await user.getIdToken();
-      debugPrint("[COMMON] Firebase ID token retrieved: ${idToken != null && idToken.isNotEmpty}");
+      debugPrint(
+        "[COMMON] Firebase ID token retrieved: ${idToken != null && idToken.isNotEmpty}",
+      );
     } catch (e) {
       debugPrint("[COMMON][WARN] Failed to get Firebase ID token: $e");
     }
@@ -314,13 +418,19 @@ Future<UserCredential?> signInWithApple() async {
           provider: supabase.OAuthProvider.apple,
           idToken: idToken,
         );
-        debugPrint("[COMMON] Supabase sign-in finished. Session present: ${authResponse.session != null}");
+        debugPrint(
+          "[COMMON] Supabase sign-in finished. Session present: ${authResponse.session != null}",
+        );
       } catch (e, st) {
-        debugPrint("[COMMON][WARN] Supabase signInWithIdToken (apple) failed: $e");
+        debugPrint(
+          "[COMMON][WARN] Supabase signInWithIdToken (apple) failed: $e",
+        );
         debugPrint(st.toString());
       }
     } else {
-      debugPrint("[COMMON][INFO] No idToken available, skipping Supabase sign-in.");
+      debugPrint(
+        "[COMMON][INFO] No idToken available, skipping Supabase sign-in.",
+      );
     }
 
     // Upsert into Supabase customers table:
@@ -341,7 +451,8 @@ Future<UserCredential?> signInWithApple() async {
         final given = appleCredential.givenName;
         final family = appleCredential.familyName;
         if (given != null && given.trim().isNotEmpty) firstName = given.trim();
-        if (family != null && family.trim().isNotEmpty) lastName = family.trim();
+        if (family != null && family.trim().isNotEmpty)
+          lastName = family.trim();
       }
 
       final upsertResponse = await supabaseClient.from('customers').upsert({
@@ -362,7 +473,10 @@ Future<UserCredential?> signInWithApple() async {
   } catch (e) {
     if (e is SignInException) rethrow;
     debugPrint("💥 [OUTER] Error during Apple Sign-In (outer catch): $e");
-    throw SignInException('unexpected_outer', 'Unexpected error during Apple sign-in.');
+    throw SignInException(
+      'unexpected_outer',
+      'Unexpected error during Apple sign-in.',
+    );
   }
 }
 
@@ -395,7 +509,9 @@ Future<void> syncFirebaseWithSupabase() async {
       provider: supabaseProvider,
       idToken: idToken,
     );
-    debugPrint('Supabase signInWithIdToken succeeded for provider: $providerId.');
+    debugPrint(
+      'Supabase signInWithIdToken succeeded for provider: $providerId.',
+    );
   } catch (e) {
     debugPrint('Supabase signInWithIdToken failed: $e');
   }
@@ -443,9 +559,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   DateTime? _birthday;
   String? _gender;
   bool _accountSaving = false;
-  bool _showAccountForm = false; // when true, show account form inside onboarding sheet
+  bool _showAccountForm =
+      false; // when true, show account form inside onboarding sheet
 
-  Map<String, String> selectedCountry = {"name": "Egypt", "code": "+20", "flag": "🇪🇬"};
+  Map<String, String> selectedCountry = {
+    "name": "Egypt",
+    "code": "+20",
+    "flag": "🇪🇬",
+  };
   String phoneNumber = '';
   List<String> otpDigits = List.filled(6, '');
   String verificationId = '';
@@ -475,7 +596,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void _goToNextPage() {
     if (_currentPage < 4) {
-      _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     }
   }
 
@@ -500,20 +624,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     VoidCallback? onRetry,
   }) {
     final t = AppLocalizations.of(context);
-    final accentColor = const Color(0xFFFF5C01); // professional accent color (can be changed)
+    final accentColor = const Color(
+      0xFFFF5C01,
+    ); // professional accent color (can be changed)
 
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
       barrierLabel: 'error_dialog',
-      barrierColor: Colors.black.withOpacity(0.45), // full-screen semi-transparent black
+      barrierColor: Colors.black.withOpacity(0.45),
+      // full-screen semi-transparent black
       transitionDuration: const Duration(milliseconds: 220),
       pageBuilder: (ctx, animation, secondary) {
         return SafeArea(
           child: Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 20,
+              ),
               child: Material(
                 color: Colors.transparent,
                 child: Container(
@@ -540,11 +670,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         height: 6,
                         decoration: BoxDecoration(
                           color: accentColor,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(14),
+                          ),
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 14,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -566,12 +701,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                     padding: EdgeInsets.all(6),
                                     child: Icon(Icons.close, size: 20),
                                   ),
-                                )
+                                ),
                               ],
                             ),
                             const SizedBox(height: 8),
-                            if (kDebugMode && technicalDetails != null && technicalDetails.isNotEmpty)
-                              _DebugExpandableDetails(details: technicalDetails),
+                            if (kDebugMode &&
+                                technicalDetails != null &&
+                                technicalDetails.isNotEmpty)
+                              _DebugExpandableDetails(
+                                details: technicalDetails,
+                              ),
                             const SizedBox(height: 8),
                             Row(
                               children: [
@@ -589,7 +728,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(8),
                                       ),
-                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 12,
+                                      ),
                                     ),
                                     child: Text(t?.retry ?? 'Retry'),
                                   ),
@@ -598,9 +740,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   onPressed: () => Navigator.of(context).pop(),
                                   child: Text(
                                     t?.close ?? 'Close',
-                                    style: const TextStyle(color: Colors.black54),
+                                    style: const TextStyle(
+                                      color: Colors.black54,
+                                    ),
                                   ),
-                                )
+                                ),
                               ],
                             ),
                           ],
@@ -622,11 +766,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid == null) {
-        debugPrint('No Firebase user signed in - skipping remote language update (onboarding).');
+        debugPrint(
+          'No Firebase user signed in - skipping remote language update (onboarding).',
+        );
         return true;
       }
       final client = supabase.Supabase.instance.client;
-      await client.from('customers').update({'language': lang}).eq('auth_uid', uid);
+      await client
+          .from('customers')
+          .update({'language': lang})
+          .eq('auth_uid', uid);
       debugPrint('Remote language updated to $lang for uid $uid (onboarding).');
       return true;
     } catch (e) {
@@ -644,115 +793,133 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
     showDialog(
       context: context,
-      builder: (_) => StatefulBuilder(builder: (context, setState) {
-        Future<void> _selectLang(String langCode) async {
-          if (saving) return;
-          setState(() {
-            saving = true;
-            status = (langCode == 'ar') ? (loc.savingLanguage ?? 'Saving language...') : (loc.savingLanguage ?? 'Saving language...');
-          });
+      builder: (_) => StatefulBuilder(
+        builder: (context, setState) {
+          Future<void> _selectLang(String langCode) async {
+            if (saving) return;
+            setState(() {
+              saving = true;
+              status = (langCode == 'ar')
+                  ? (loc.savingLanguage ?? 'Saving language...')
+                  : (loc.savingLanguage ?? 'Saving language...');
+            });
 
-          final remoteOk = await _updateRemoteLanguage(langCode);
+            final remoteOk = await _updateRemoteLanguage(langCode);
 
-          // persist locally
-          try {
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.setString('locale', langCode);
-          } catch (e) {
-            debugPrint('Failed to save locale locally: $e');
+            // persist locally
+            try {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setString('locale', langCode);
+            } catch (e) {
+              debugPrint('Failed to save locale locally: $e');
+            }
+
+            // apply app locale immediately
+            try {
+              await TalabakApp.setLocale(context, Locale(langCode));
+            } catch (e) {
+              debugPrint('Failed to set locale via TalabakApp: $e');
+            }
+
+            // small delay so user sees state change
+            await Future.delayed(const Duration(milliseconds: 350));
+
+            setState(() {
+              saving = false;
+              status = remoteOk
+                  ? (langCode == 'ar'
+                        ? (loc.languageSaved ?? 'Language saved')
+                        : (loc.languageSaved ?? 'Language saved'))
+                  : (langCode == 'ar'
+                        ? (loc.languageSavedLocalFailed ??
+                              'Saved locally (sync failed)')
+                        : (loc.languageSavedLocalFailed ??
+                              'Saved locally (sync failed)'));
+            });
+
+            // close dialog after a short pause on success
+            await Future.delayed(const Duration(milliseconds: 600));
+            if (mounted) Navigator.of(context, rootNavigator: true).pop();
+            // show a small SnackBar to confirm
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(status),
+                  backgroundColor: remoteOk
+                      ? Colors.green.shade600
+                      : Colors.orange.shade800,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            }
           }
 
-          // apply app locale immediately
-          try {
-            await TalabakApp.setLocale(context, Locale(langCode));
-          } catch (e) {
-            debugPrint('Failed to set locale via TalabakApp: $e');
-          }
-
-          // small delay so user sees state change
-          await Future.delayed(const Duration(milliseconds: 350));
-
-          setState(() {
-            saving = false;
-            status = remoteOk
-                ? (langCode == 'ar' ? (loc.languageSaved ?? 'Language saved') : (loc.languageSaved ?? 'Language saved'))
-                : (langCode == 'ar' ? (loc.languageSavedLocalFailed ?? 'Saved locally (sync failed)') : (loc.languageSavedLocalFailed ?? 'Saved locally (sync failed)'));
-          });
-
-          // close dialog after a short pause on success
-          await Future.delayed(const Duration(milliseconds: 600));
-          if (mounted) Navigator.of(context, rootNavigator: true).pop();
-          // show a small SnackBar to confirm
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(status),
-                backgroundColor: remoteOk ? Colors.green.shade600 : Colors.orange.shade800,
-                duration: const Duration(seconds: 2),
+          Widget langButton(String title, String code) {
+            return Expanded(
+              child: OutlinedButton(
+                onPressed: saving ? null : () => _selectLang(code),
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  side: BorderSide(color: Colors.grey.shade300),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             );
           }
-        }
 
-        Widget langButton(String title, String code) {
-          return Expanded(
-            child: OutlinedButton(
-              onPressed: saving ? null : () => _selectLang(code),
-              style: OutlinedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                side: BorderSide(color: Colors.grey.shade300),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              child: Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.w600,
+          return AlertDialog(
+            title: Text(loc.languages),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(loc.selectLanguage, textAlign: TextAlign.center),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    langButton(loc.arabic, 'ar'),
+                    const SizedBox(width: 12),
+                    langButton(loc.english, 'en'),
+                  ],
                 ),
-              ),
-            ),
-          );
-        }
-
-        return AlertDialog(
-          title: Text(loc.languages),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(loc.selectLanguage, textAlign: TextAlign.center),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  langButton(loc.arabic, 'ar'),
-                  const SizedBox(width: 12),
-                  langButton(loc.english, 'en'),
-                ],
-              ),
-              const SizedBox(height: 12),
-              if (saving)
-                Text(
-                  Localizations.localeOf(context).languageCode == 'ar' ? (loc.savingLanguage ?? 'Saving language...') : (loc.savingLanguage ?? 'Saving language...'),
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
-                )
-              else if (status.isNotEmpty)
-                Text(
-                  status,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: status.contains('فشل') || status.contains('Failed') ? Colors.red.shade600 : Colors.green.shade700,
+                const SizedBox(height: 12),
+                if (saving)
+                  Text(
+                    Localizations.localeOf(context).languageCode == 'ar'
+                        ? (loc.savingLanguage ?? 'Saving language...')
+                        : (loc.savingLanguage ?? 'Saving language...'),
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+                  )
+                else if (status.isNotEmpty)
+                  Text(
+                    status,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: status.contains('فشل') || status.contains('Failed')
+                          ? Colors.red.shade600
+                          : Colors.green.shade700,
+                    ),
                   ),
-                ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: saving ? null : () => Navigator.of(context).pop(),
-              child: Text(loc.no),
+              ],
             ),
-          ],
-        );
-      }),
+            actions: [
+              TextButton(
+                onPressed: saving ? null : () => Navigator.of(context).pop(),
+                child: Text(loc.no),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -784,7 +951,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (_) => const MainScreen()),
-                (route) => false,
+            (route) => false,
           );
         }
         return;
@@ -815,7 +982,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         final display = firebaseUser.displayName ?? '';
         final parts = display.trim().split(RegExp(r'\s+'));
         _firstNameController.text = parts.isNotEmpty ? parts.first : '';
-        _lastNameController.text = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+        _lastNameController.text = parts.length > 1
+            ? parts.sublist(1).join(' ')
+            : '';
         _phoneController.text = firebaseUser.phoneNumber ?? '';
 
         // Show inline account form inside onboarding (same background & semi-transparent sheet)
@@ -833,13 +1002,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => const MainScreen()),
-              (route) => false,
+          (route) => false,
         );
       }
     } on SignInException catch (e) {
       debugPrint('SignInException: ${e.code} - ${e.message}');
       _showErrorSnack(
-        userMessage: AppLocalizations.of(context)?.googleSignInFailed ?? 'Google sign-in failed',
+        userMessage:
+            AppLocalizations.of(context)?.googleSignInFailed ??
+            'Google sign-in failed',
         technicalDetails: e.message,
         allowRetry: true,
         onRetry: () {
@@ -847,9 +1018,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         },
       );
     } on FirebaseAuthException catch (e) {
-      debugPrint('FirebaseAuthException during Google sign-in: ${e.code} ${e.message}');
+      debugPrint(
+        'FirebaseAuthException during Google sign-in: ${e.code} ${e.message}',
+      );
       _showErrorSnack(
-        userMessage: AppLocalizations.of(context)?.signInFailed ?? 'Sign in failed',
+        userMessage:
+            AppLocalizations.of(context)?.signInFailed ?? 'Sign in failed',
         technicalDetails: '${e.code}: ${e.message}',
         allowRetry: true,
         onRetry: () => _onGoogleSignInPressed(),
@@ -857,7 +1031,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     } catch (e) {
       debugPrint('Unexpected error during Google sign-in: $e');
       _showErrorSnack(
-        userMessage: AppLocalizations.of(context)?.signInFailed ?? 'Sign in failed',
+        userMessage:
+            AppLocalizations.of(context)?.signInFailed ?? 'Sign in failed',
         technicalDetails: e.toString(),
         allowRetry: true,
         onRetry: () => _onGoogleSignInPressed(),
@@ -890,7 +1065,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('seenOnboarding', true);
         if (mounted) {
-          Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const MainScreen()), (route) => false);
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const MainScreen()),
+            (route) => false,
+          );
         }
         return;
       }
@@ -917,7 +1096,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         final display = firebaseUser.displayName ?? '';
         final parts = display.trim().split(RegExp(r'\s+'));
         _firstNameController.text = parts.isNotEmpty ? parts.first : '';
-        _lastNameController.text = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+        _lastNameController.text = parts.length > 1
+            ? parts.sublist(1).join(' ')
+            : '';
         _phoneController.text = firebaseUser.phoneNumber ?? '';
 
         setState(() => _showAccountForm = true);
@@ -927,12 +1108,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('seenOnboarding', true);
       if (mounted) {
-        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const MainScreen()), (route) => false);
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const MainScreen()),
+          (route) => false,
+        );
       }
     } on SignInException catch (e) {
       debugPrint('SignInException (apple): ${e.code} - ${e.message}');
       _showErrorSnack(
-        userMessage: AppLocalizations.of(context)?.signInFailed ?? 'Sign in failed',
+        userMessage:
+            AppLocalizations.of(context)?.signInFailed ?? 'Sign in failed',
         technicalDetails: e.message,
         allowRetry: true,
         onRetry: () => _onAppleSignInPressed(),
@@ -940,7 +1126,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     } catch (e) {
       debugPrint('Unexpected error during Apple sign-in: $e');
       _showErrorSnack(
-        userMessage: AppLocalizations.of(context)?.signInFailed ?? 'Sign in failed',
+        userMessage:
+            AppLocalizations.of(context)?.signInFailed ?? 'Sign in failed',
         technicalDetails: e.toString(),
         allowRetry: true,
         onRetry: () => _onAppleSignInPressed(),
@@ -969,9 +1156,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: const TextStyle(
-                  fontWeight: FontWeight.w600, fontSize: 14, color: Colors.black87)),
+          Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+              color: Colors.black87,
+            ),
+          ),
           const SizedBox(height: 6),
           TextFormField(
             controller: controller,
@@ -1013,7 +1205,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         final newDisplayName =
-        '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}'.trim();
+            '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}'
+                .trim();
         if (newDisplayName.isNotEmpty && newDisplayName != user.displayName) {
           await user.updateDisplayName(newDisplayName);
           await user.reload();
@@ -1025,7 +1218,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           uid: user.uid,
           firstName: _firstNameController.text.trim(),
           lastName: _lastNameController.text.trim(),
-          photoUrl: user.photoURL ?? '', // protect from null (do not change other code)
+          photoUrl: user.photoURL ?? '',
+          // protect from null (do not change other code)
           birthDate: birthStr,
           gender: _gender,
           phoneNumber: _phoneController.text.trim(),
@@ -1033,7 +1227,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         );
 
         if (!ok) {
-          _showErrorSnack(userMessage: AppLocalizations.of(context)?.failedToSave ?? 'Failed to save profile');
+          _showErrorSnack(
+            userMessage:
+                AppLocalizations.of(context)?.failedToSave ??
+                'Failed to save profile',
+          );
           return;
         }
       }
@@ -1046,12 +1244,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => const MainScreen()),
-              (route) => false,
+          (route) => false,
         );
       }
     } catch (e) {
       debugPrint('Error saving profile: $e');
-      _showErrorSnack(userMessage: AppLocalizations.of(context)?.failedToSave ?? 'Failed to save profile');
+      _showErrorSnack(
+        userMessage:
+            AppLocalizations.of(context)?.failedToSave ??
+            'Failed to save profile',
+      );
     } finally {
       if (mounted) setState(() => _accountSaving = false);
     }
@@ -1080,14 +1282,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Expanded(
               child: Text(
                 t.accountInfo,
-                style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: const Color(0xFFFF5C01),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               onPressed: _accountSaving ? null : _saveAccountAndContinue,
               child: Text(t.save),
@@ -1111,13 +1319,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     label: t.firstName,
                     controller: _firstNameController,
                     enabled: true,
-                    validator: (value) => (value == null || value.isEmpty) ? t.requiredField : null,
+                    validator: (value) => (value == null || value.isEmpty)
+                        ? t.requiredField
+                        : null,
                   ),
                   _buildLabeledField(
                     label: t.lastName,
                     controller: _lastNameController,
                     enabled: true,
-                    validator: (value) => (value == null || value.isEmpty) ? t.requiredField : null,
+                    validator: (value) => (value == null || value.isEmpty)
+                        ? t.requiredField
+                        : null,
                   ),
                   _buildLabeledField(
                     label: (t.phone is String) ? t.phone('') : t.phone(''),
@@ -1135,7 +1347,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: AbsorbPointer(
                       child: _buildLabeledField(
                         label: t.birthday,
-                        controller: TextEditingController(text: _birthday == null ? '' : _formatDate(_birthday!)),
+                        controller: TextEditingController(
+                          text: _birthday == null
+                              ? ''
+                              : _formatDate(_birthday!),
+                        ),
                         enabled: false,
                         suffixIcon: const Icon(Icons.calendar_today),
                       ),
@@ -1143,7 +1359,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                   Container(
                     margin: const EdgeInsets.only(bottom: 16),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.grey[50],
                       borderRadius: BorderRadius.circular(12),
@@ -1152,9 +1371,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(t.genderOptional,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w600, fontSize: 14, color: Colors.black87)),
+                        Text(
+                          t.genderOptional,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            color: Colors.black87,
+                          ),
+                        ),
                         Row(
                           children: [
                             Radio<String>(
@@ -1179,15 +1403,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
-                      onPressed: _accountSaving ? null : _saveAccountAndContinue,
+                      onPressed: _accountSaving
+                          ? null
+                          : _saveAccountAndContinue,
                       style: OutlinedButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
                         side: const BorderSide(color: Colors.white70),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                       child: _accountSaving
-                          ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                          : Text(t.save, style: const TextStyle(color: Colors.white)),
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Text(
+                              t.save,
+                              style: const TextStyle(color: Colors.white),
+                            ),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -1215,15 +1450,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       switch (_currentPage) {
         case 0:
           title = loc.onboardingTapEatSmile ?? 'Tap - Eat - Smile';
-          subtitle = loc.onboardingTapEatSmileSubtitle ?? 'Your favorite meals, just a tap away';
+          subtitle =
+              loc.onboardingTapEatSmileSubtitle ??
+              'Your favorite meals, just a tap away';
           break;
         case 1:
           title = loc.onboardingFlavorInAFlash ?? 'Flavor in a Flash';
-          subtitle = loc.onboardingFlavorInAFlashSubtitle ?? 'Hot, fresh, and fast to your door';
+          subtitle =
+              loc.onboardingFlavorInAFlashSubtitle ??
+              'Hot, fresh, and fast to your door';
           break;
         case 2:
           title = loc.onboardingFoodYourWay ?? 'Food, Your Way';
-          subtitle = loc.onboardingFoodYourWaySubtitle ?? 'Order exactly what you love';
+          subtitle =
+              loc.onboardingFoodYourWaySubtitle ??
+              'Order exactly what you love';
           break;
         default:
           title = '';
@@ -1235,7 +1476,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         children: [
           Text(
             title,
-            style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 10),
           Text(
@@ -1250,10 +1495,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 onPressed: _goToNextPage,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 30,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                 ),
-                child: Text(loc.next ?? 'Next', style: const TextStyle(color: Colors.black)),
+                child: Text(
+                  loc.next ?? 'Next',
+                  style: const TextStyle(color: Colors.black),
+                ),
               ),
             ],
           ),
@@ -1263,9 +1516,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(loc.enterYourEmail ?? 'Enter your email', style: const TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)),
+          Text(
+            loc.enterYourEmail ?? 'Enter your email',
+            style: const TextStyle(
+              fontSize: 20,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 8),
-          Text(loc.signInQuicklyWithGoogle ?? 'Sign in quickly with Google', style: const TextStyle(fontSize: 14, color: Colors.white70)),
+          Text(
+            loc.signInQuicklyWithGoogle ?? 'Sign in quickly with Google',
+            style: const TextStyle(fontSize: 14, color: Colors.white70),
+          ),
           const SizedBox(height: 30),
           Center(
             child: SizedBox(
@@ -1280,28 +1543,56 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFAF7EF),
                         elevation: 6,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       child: _googleLoading
-                          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.black))
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: Colors.black,
+                              ),
+                            )
                           : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 28,
-                            height: 28,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(6),
-                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 2)],
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 28,
+                                  height: 28,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(6),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.08),
+                                        blurRadius: 2,
+                                      ),
+                                    ],
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: const Text(
+                                    "G",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  loc.google,
+                                  style: const TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
                             ),
-                            alignment: Alignment.center,
-                            child: const Text("G", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 16)),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(loc.google, style: const TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.w600)),
-                        ],
-                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -1333,7 +1624,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          Positioned.fill(child: Image.asset("assets/images/background.jpg", fit: BoxFit.cover)),
+          Positioned.fill(
+            child: Image.asset(
+              "assets/images/background.jpg",
+              fit: BoxFit.cover,
+            ),
+          ),
           PageView.builder(
             controller: _pageController,
             onPageChanged: (index) => setState(() => _currentPage = index),
@@ -1348,7 +1644,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
               decoration: BoxDecoration(
                 color: Colors.black.withOpacity(0.6),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(25),
+                ),
               ),
               child: Column(
                 children: [
@@ -1358,16 +1656,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       const Spacer(),
                       OutlinedButton.icon(
                         onPressed: _showLanguagesDialog,
-                        icon: const Icon(Icons.language, color: Colors.white, size: 18),
+                        icon: const Icon(
+                          Icons.language,
+                          color: Colors.white,
+                          size: 18,
+                        ),
                         label: Text(
                           loc?.languages ?? 'Language',
                           style: const TextStyle(color: Colors.white),
                         ),
                         style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: Colors.white.withOpacity(0.12)),
+                          side: BorderSide(
+                            color: Colors.white.withOpacity(0.12),
+                          ),
                           backgroundColor: Colors.transparent,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                       ),
                     ],
@@ -1393,8 +1702,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 }
 
 // helper widget unchanged (kept for parity)
-Widget _buildFlagOption(String flagEmoji, String code, String countryCode,
-    String selectedCode, void Function(void Function()) setState) {
+Widget _buildFlagOption(
+  String flagEmoji,
+  String code,
+  String countryCode,
+  String selectedCode,
+  void Function(void Function()) setState,
+) {
   return GestureDetector(
     onTap: () {
       setState(() {
@@ -1405,7 +1719,9 @@ Widget _buildFlagOption(String flagEmoji, String code, String countryCode,
       margin: const EdgeInsets.symmetric(vertical: 4),
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
       decoration: BoxDecoration(
-        color: selectedCode == code ? Colors.white.withOpacity(0.2) : Colors.transparent,
+        color: selectedCode == code
+            ? Colors.white.withOpacity(0.2)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -1422,10 +1738,12 @@ Widget _buildFlagOption(String flagEmoji, String code, String countryCode,
 /// small debug-only expandable details widget
 class _DebugExpandableDetails extends StatefulWidget {
   final String details;
+
   const _DebugExpandableDetails({required this.details});
 
   @override
-  State<_DebugExpandableDetails> createState() => _DebugExpandableDetailsState();
+  State<_DebugExpandableDetails> createState() =>
+      _DebugExpandableDetailsState();
 }
 
 class _DebugExpandableDetailsState extends State<_DebugExpandableDetails> {
@@ -1443,10 +1761,18 @@ class _DebugExpandableDetailsState extends State<_DebugExpandableDetails> {
             children: [
               Text(
                 loc?.details ?? 'Details',
-                style: TextStyle(fontSize: 13, color: Colors.grey[700], fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey[700],
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(width: 8),
-              Icon(_open ? Icons.expand_less : Icons.expand_more, size: 18, color: Colors.grey[700]),
+              Icon(
+                _open ? Icons.expand_less : Icons.expand_more,
+                size: 18,
+                color: Colors.grey[700],
+              ),
             ],
           ),
         ),
@@ -1469,7 +1795,9 @@ class _DebugExpandableDetailsState extends State<_DebugExpandableDetails> {
               ),
             ),
           ),
-          crossFadeState: _open ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+          crossFadeState: _open
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
           duration: const Duration(milliseconds: 180),
         ),
       ],

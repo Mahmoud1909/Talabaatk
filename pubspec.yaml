@@ -57,7 +57,7 @@ flutter:
     - assets/images/
     - assets/animations/success.json
     - assets/animations/
-    - assets/images/img.png
+    - assets/images/app_icon_New.png
     - assets/icon/app_icon.png
     - assets/icon/app_icon_New.png
 
