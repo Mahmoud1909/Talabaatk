@@ -18,7 +18,7 @@ import 'package:talabak_users/utils/location_helper.dart';
 import 'package:talabak_users/screens/restaurant_detail_screen.dart';
 import 'package:talabak_users/l10n/app_localizations.dart';
 
-const Color kPrimaryColor = Color(0xFFFF5C01);
+const Color kPrimaryColor = Color(0xFF25AA50);
 
 enum SortOption { aToZ, fastDelivery, under45, closer }
 
@@ -737,16 +737,16 @@ class _CategoryRestaurantsScreenState extends State<CategoryRestaurantsScreen> w
     // - Dark: inner background black, typed text & hint use primary color, prefix icon uses primary.
     // - Light: inner background white, text black, border subtle dark.
     final fillColor = isDark ? Colors.black : Colors.white;
-    final typedTextColor = isDark ? const Color(0xFFFF5C01) : Colors.black87;
-    final hintColor = isDark ? const Color(0xFFFF5C01).withOpacity(0.9) : Colors.black54;
-    final iconColor = isDark ? const Color(0xFFFF5C01) : Colors.black54;
+    final typedTextColor = isDark ? const Color(0xFF25AA50) : Colors.black87;
+    final hintColor = isDark ? const Color(0xFF25AA50).withOpacity(0.9) : Colors.black54;
+    final iconColor = isDark ? const Color(0xFF25AA50) : Colors.black54;
     final enabledBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide(color: isDark ? const Color(0xFFFF5C01) : Colors.black, width: 1.2),
+      borderSide: BorderSide(color: isDark ? const Color(0xFF25AA50) : Colors.black, width: 1.2),
     );
     final focusedBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide(color: const Color(0xFFFF5C01), width: 1.6),
+      borderSide: BorderSide(color: const Color(0xFF25AA50), width: 1.6),
     );
 
     return Padding(
@@ -765,7 +765,7 @@ class _CategoryRestaurantsScreenState extends State<CategoryRestaurantsScreen> w
             controller: _searchController,
             textInputAction: TextInputAction.search,
             onSubmitted: (_) => _refresh(),
-            cursorColor: const Color(0xFFFF5C01),
+            cursorColor: const Color(0xFF25AA50),
             style: TextStyle(fontSize: 16, color: typedTextColor),
             onChanged: (_) => _onSearchChanged(),
             decoration: InputDecoration(
@@ -785,7 +785,7 @@ class _CategoryRestaurantsScreenState extends State<CategoryRestaurantsScreen> w
                 },
                 child: Padding(
                   padding: const EdgeInsets.only(right: 10.0),
-                  child: Icon(Icons.close, size: 20, color: isDark ? const Color(0xFFFF5C01) : Colors.black54),
+                  child: Icon(Icons.close, size: 20, color: isDark ? const Color(0xFF25AA50) : Colors.black54),
                 ),
               )
                   : null,

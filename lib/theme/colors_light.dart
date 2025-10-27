@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-const Color kPrimary = Color(0xFFFF5C01);       // app brand — never switches
+const Color kPrimary = Color(0xFF25AA50);       // app brand — never switches
 const Color kBackground = Color(0xFFFFFFFF);    // scaffold background
 const Color kSurface = Color(0xFFF7F7F7);       // cards / panels
 const Color kCard = Color(0xFFFFFFFF);

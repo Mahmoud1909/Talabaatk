@@ -165,7 +165,7 @@ class _SearchAdsBannerMultiState extends State<SearchAdsBannerMulti> {
 
       final theme = Theme.of(fieldContext);
       final bool isDark = theme.brightness == Brightness.dark;
-      final typedTextColor = isDark ? const Color(0xFFFF5C01) : Colors.black87;
+      final typedTextColor = isDark ? const Color(0xFF25AA50) : Colors.black87;
 
       final tp = TextPainter(
         text: TextSpan(text: _ctrl.text, style: TextStyle(fontSize: 16, color: typedTextColor)),
@@ -279,7 +279,7 @@ class _SearchAdsBannerMultiState extends State<SearchAdsBannerMulti> {
         child: Center(
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             const SizedBox(width: 12),
-            SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: isDark ? const Color(0xFFFF5C01) : theme.colorScheme.primary)),
+            SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: isDark ? const Color(0xFF25AA50) : theme.colorScheme.primary)),
             const SizedBox(width: 12),
             Text(searchingText, style: theme.textTheme.bodyMedium),
           ]),
@@ -316,7 +316,7 @@ class _SearchAdsBannerMultiState extends State<SearchAdsBannerMulti> {
           trailingWidget = Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFFFF5C01),
+              color: const Color(0xFF25AA50),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -400,16 +400,16 @@ class _SearchAdsBannerMultiState extends State<SearchAdsBannerMulti> {
     // - Dark: inner background black, typed text & hint = primary color, border & prefix icon = primary color.
     // - Light: background white, text black, border black.
     final fillColor = isDark ? Colors.black : Colors.white;
-    final typedTextColor = isDark ? const Color(0xFFFF5C01) : Colors.black87;
-    final hintColor = isDark ? const Color(0xFFFF5C01).withOpacity(0.9) : Colors.black54;
-    final iconColor = isDark ? const Color(0xFFFF5C01) : Colors.black54;
+    final typedTextColor = isDark ? const Color(0xFF25AA50) : Colors.black87;
+    final hintColor = isDark ? const Color(0xFF25AA50).withOpacity(0.9) : Colors.black54;
+    final iconColor = isDark ? const Color(0xFF25AA50) : Colors.black54;
     final enabledBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide(color: isDark ? const Color(0xFFFF5C01) : Colors.black, width: 1.2),
+      borderSide: BorderSide(color: isDark ? const Color(0xFF25AA50) : Colors.black, width: 1.2),
     );
     final focusedBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide(color: const Color(0xFFFF5C01), width: 1.6),
+      borderSide: BorderSide(color: const Color(0xFF25AA50), width: 1.6),
     );
 
     return Padding(
@@ -428,7 +428,7 @@ class _SearchAdsBannerMultiState extends State<SearchAdsBannerMulti> {
                 onChanged: _onTextChanged,
                 textInputAction: TextInputAction.search,
                 onSubmitted: (s) => _search(s),
-                cursorColor: const Color(0xFFFF5C01),
+                cursorColor: const Color(0xFF25AA50),
                 decoration: InputDecoration(
                   hintText: AppLocalizations.of(context)?.searchHint ?? 'Search restaurants or items...',
                   hintStyle: TextStyle(color: hintColor),
@@ -438,7 +438,7 @@ class _SearchAdsBannerMultiState extends State<SearchAdsBannerMulti> {
                     _ctrl.clear();
                     _onTextChanged('');
                     _removeOverlay();
-                  }, child: Icon(Icons.close, color: isDark ? const Color(0xFFFF5C01) : Colors.black54))
+                  }, child: Icon(Icons.close, color: isDark ? const Color(0xFF25AA50) : Colors.black54))
                       : null,
                   filled: true,
                   fillColor: fillColor,

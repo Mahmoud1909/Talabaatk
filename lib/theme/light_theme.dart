@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-const Color kPrimaryColor = Color(0xFFFF5C01);
+const Color kPrimaryColor = Color(0xFF25AA50);
 
 final ThemeData lightTheme = ThemeData(
   brightness: Brightness.light,

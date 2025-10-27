@@ -1,8 +1,3 @@
-// lib/screens/main_screen.dart
-// Main screen (English) — dark & light ready.
-// Uses professional overlay banners (MessageBanner) instead of SnackBars or raw MaterialBanners.
-// Localizable via AppLocalizations when available.
-
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';

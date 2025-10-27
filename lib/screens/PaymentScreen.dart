@@ -40,7 +40,7 @@ class PaymentScreen extends StatefulWidget {
 }
 
 class _PaymentScreenState extends State<PaymentScreen> {
-  final Color primaryRed = const Color(0xFFFF5C01);
+  final Color primaryRed = const Color(0xFF25AA50);
   final SupabaseClient _supabase = Supabase.instance.client;
 
   // user inputs
@@ -853,7 +853,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           child: Text(
                             '${fixedFee.toStringAsFixed(2)} EGP',
                             style: const TextStyle(
-                              color: Color(0xFFFF5C01),
+                              color: Color(0xFF25AA50),
                               fontWeight: FontWeight.bold,
                             ),
                           ),

@@ -18,7 +18,7 @@ import 'package:talabak_users/l10n/app_localizations.dart';
 /// Keep global subscription slot for compatibility (no prints)
 StreamSubscription<List<Map<String, dynamic>>>? _ordersSub;
 
-const Color kPrimaryColor = Color(0xFFFF5C01);
+const Color kPrimaryColor = Color(0xFF25AA50);
 
 class AccountPreviousOrdersScreen extends StatefulWidget {
   const AccountPreviousOrdersScreen({Key? key}) : super(key: key);

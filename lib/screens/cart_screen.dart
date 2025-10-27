@@ -12,7 +12,7 @@ import 'package:talabak_users/services/cart_api.dart';
 import 'package:talabak_users/screens/item_detail_screen.dart';
 import 'package:talabak_users/l10n/app_localizations.dart';
 
-const Color kPrimaryColor = Color(0xFFFF5C01);
+const Color kPrimaryColor = Color(0xFF25AA50);
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});

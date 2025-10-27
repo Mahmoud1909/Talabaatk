@@ -26,7 +26,7 @@ class RestaurantTypesRow extends StatefulWidget {
 
 class _RestaurantTypesRowState extends State<RestaurantTypesRow> with SingleTickerProviderStateMixin {
   final SupabaseClient _supabase = Supabase.instance.client;
-  final Color _primary = const Color(0xFFFF5C01);
+  final Color _primary = const Color(0xFF25AA50);
 
   List<Map<String, dynamic>> _types = [];
   bool _loading = true;
@@ -553,7 +553,7 @@ class RestaurantTypesPicker extends StatefulWidget {
 
 class _RestaurantTypesPickerState extends State<RestaurantTypesPicker> {
   final SupabaseClient _supabase = Supabase.instance.client;
-  final Color _primary = const Color(0xFFFF5C01);
+  final Color _primary = const Color(0xFF25AA50);
 
   List<Map<String, dynamic>> _types = [];
   Set<int> _selected = {};

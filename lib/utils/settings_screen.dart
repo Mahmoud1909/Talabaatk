@@ -14,7 +14,7 @@ import 'package:talabak_users/services/supabase_service.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 final supabase = Supabase.instance.client;
-const Color kPrimaryColor = Color(0xFFFF5C01);
+const Color kPrimaryColor = Color(0xFF25AA50);
 
 /// Custom header with matching status bar color
 class CustomHeader extends StatelessWidget {

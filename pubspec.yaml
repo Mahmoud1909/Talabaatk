@@ -57,24 +57,23 @@ flutter:
     - assets/images/
     - assets/animations/success.json
     - assets/animations/
-    - assets/images/app_icon_New.png
-    - assets/icon/app_icon.png
+    - assets/icon/app_icon_New.png
     - assets/icon/app_icon_New.png
 
 flutter_native_splash:
-  color: "#ff5c01"
-  image: assets/icon/app_icon.png
-  color_dark: "#ff5c01"
-  image_dark: assets/icon/app_icon.png
+  color: "#25aa50"
+  image: assets/icon/app_icon_New.png
+  color_dark: "#25aa50"
+  image_dark: assets/icon/app_icon_New.png
 
   android: true
   ios: true
   web: true
 
   android_12:
-    color: "#ff5c01"
-    image: assets/icon/app_icon.png
-    icon_background_color: "#ff5c01"
+    color: "#25aa50"
+    image: assets/icon/app_icon_New.png
+    icon_background_color: "#25aa50"
 
   android_gravity: center
   ios_content_mode: center

@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:talabak_users/services/supabase_service.dart';
 import 'package:talabak_users/l10n/app_localizations.dart';
 
-const Color kPrimaryColor = Color(0xFFFF5C01);
+const Color kPrimaryColor = Color(0xFF25AA50);
 
 enum StatusType { success, error }
 

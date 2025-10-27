@@ -29,7 +29,7 @@ import 'package:talabak_users/screens/main_screen.dart';
 
 enum PaymentMethod { mobileWallet, cash }
 
-const Color kPrimaryColor = Color(0xFFFF5C01); // never changes across light/dark
+const Color kPrimaryColor = Color(0xFF25AA50); // never changes across light/dark
 
 double _degToRad(double deg) => deg * (math.pi / 180.0);
 

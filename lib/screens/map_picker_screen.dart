@@ -13,7 +13,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:talabak_users/l10n/app_localizations.dart';
 
-const Color kPrimaryColor = Color(0xFFFF5C01);
+const Color kPrimaryColor = Color(0xFF25AA50);
 
 class MapPickerScreen extends StatefulWidget {
   final String apiKey;

@@ -15,7 +15,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:talabak_users/screens/checkout_payment_screen.dart';
 import 'package:talabak_users/screens/PaymentScreen.dart';
 
-const Color _kPrimary = Color(0xFFFF5C01);
+const Color _kPrimary = Color(0xFF25AA50);
 const double _kCardRadius = 18.0;
 
 /// Fallback images

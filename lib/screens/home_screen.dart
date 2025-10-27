@@ -17,7 +17,7 @@ import 'package:talabak_users/widgets/categories_row.dart';
 import 'package:talabak_users/widgets/offers_widget.dart';
 import 'package:talabak_users/l10n/app_localizations.dart';
 
-const Color kPrimaryColor = Color(0xFFFF5C01);
+const Color kPrimaryColor = Color(0xFF25AA50);
 
 /// HomeScreen: enhanced with polished animations and a
 /// distinctive overlay banner system for user messages
@@ -443,12 +443,6 @@ class _SlideFadeWrapperState extends State<SlideFadeWrapper> with SingleTickerPr
   }
 }
 
-/// -------------------------
-/// Message Banner (overlay)
-/// -------------------------
-/// Usage:
-///   MessageBanner.showPositive(context, "Saved");
-///   MessageBanner.showNegative(context, "Failed to save");
 class MessageBanner {
   static void _show(BuildContext context, String message, {required bool positive}) {
     final overlay = Overlay.of(context);

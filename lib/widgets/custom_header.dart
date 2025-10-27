@@ -27,7 +27,7 @@ class CustomHeader extends StatelessWidget {
     final String? photoUrl = user?.photoURL;
 
     return Container(
-      color: const Color(0xFFFF5C01),
+      color: const Color(0xFF25AA50),
       child: SafeArea(
         bottom: false,
         child: Container(

@@ -6,7 +6,7 @@ class SuccessScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFF5C01), // red background
+      backgroundColor: const Color(0xFF25AA50), // red background
       body: Center(
         child: Lottie.asset(
           'assets/animations/success.json',

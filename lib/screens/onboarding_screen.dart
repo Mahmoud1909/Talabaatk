@@ -56,7 +56,6 @@ String _sha256ofString(String input) {
   return digest.toString();
 }
 
-// ---------------- Google Sign-In (existing) ----------------
 
 Future<UserCredential?> signInWithGoogle() async {
   // NOTE: This function now throws SignInException for real errors so caller can
@@ -66,7 +65,6 @@ Future<UserCredential?> signInWithGoogle() async {
   try {
     late UserCredential userCredential;
 
-    // ----- CASE 1: WEB -----
     if (kIsWeb) {
       debugPrint("[WEB] Detected Web platform. Signing in with popup...");
       try {
@@ -480,7 +478,6 @@ Future<UserCredential?> signInWithApple() async {
   }
 }
 
-// ---------------- Sync (generalized) ----------------
 
 Future<void> syncFirebaseWithSupabase() async {
   final user = FirebaseAuth.instance.currentUser;
@@ -537,7 +534,6 @@ Future<void> syncFirebaseWithSupabase() async {
   }
 }
 
-// ---------------- Onboarding screen ----------------
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -625,7 +621,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }) {
     final t = AppLocalizations.of(context);
     final accentColor = const Color(
-      0xFFFF5C01,
+      0xFF25AA50,
     ); // professional accent color (can be changed)
 
     showGeneralDialog(
@@ -1144,7 +1140,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     TextInputType keyboardType = TextInputType.text,
     Widget? suffixIcon,
     String? Function(String?)? validator,
-  }) {
+  })
+  {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -1275,7 +1272,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               },
               child: const CircleAvatar(
                 backgroundColor: Colors.white,
-                child: Icon(Icons.arrow_back, color: Color(0xFFFF5C01)),
+                child: Icon(Icons.arrow_back, color: Color(0xFF25AA50)),
               ),
             ),
             const SizedBox(width: 12),
@@ -1292,7 +1289,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
-                foregroundColor: const Color(0xFFFF5C01),
+                foregroundColor: const Color(0xFF25AA50),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -1639,7 +1636,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
-              // increased height so the account form has space and scrolls
               height: MediaQuery.of(context).size.height * 0.72,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
               decoration: BoxDecoration(
@@ -1650,7 +1646,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
               child: Column(
                 children: [
-                  // top row with language button on the right
                   Row(
                     children: [
                       const Spacer(),
@@ -1701,14 +1696,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 }
 
-// helper widget unchanged (kept for parity)
 Widget _buildFlagOption(
   String flagEmoji,
   String code,
   String countryCode,
   String selectedCode,
   void Function(void Function()) setState,
-) {
+)
+{
   return GestureDetector(
     onTap: () {
       setState(() {
@@ -1735,7 +1730,6 @@ Widget _buildFlagOption(
   );
 }
 
-/// small debug-only expandable details widget
 class _DebugExpandableDetails extends StatefulWidget {
   final String details;
 

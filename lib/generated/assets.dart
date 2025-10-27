@@ -4,14 +4,13 @@ class Assets {
 
   static const String animationsSuccess = 'assets/animations/success.json';
   static const String assetsAnimationsSuccess = 'assets/animations/success.json';
-  static const String assetsIconAppIcon = 'assets/icon/app_icon.png';
+  static const String assetsIconAppIconNew = 'assets/icon/app_icon_New.png';
   static const String assetsImagesBackground = 'assets/images/background.jpg';
-  static const String assetsImagesImg = 'assets/images/app_icon_New.png';
   static const String iconAppIcon = 'assets/icon/app_icon.png';
-  static const String iconImg = 'assets/icon/app_icon_New.png';
+  static const String iconAppIconNew = 'assets/icon/app_icon_New.png';
   static const String imagesAppI = 'assets/images/app_i.png';
   static const String imagesBackground = 'assets/images/background.jpg';
-  static const String imagesImg = 'assets/images/app_icon_New.png';
+  static const String imagesImg = 'assets/images/img.png';
   static const String imagesTalabakLogo = 'assets/images/talabak_logo.png';
 
 }

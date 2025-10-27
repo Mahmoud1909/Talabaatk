@@ -14,7 +14,7 @@ import 'package:talabak_users/l10n/app_localizations.dart';
 import 'theme/light_theme.dart';
 import 'theme/dark_theme.dart';
 
-const Color kPrimaryColor = Color(0xFFFF5C01);
+const Color kPrimaryColor = Color(0xFF25AA50);
 
 Future<void> ensureSupabaseSessionFromFirebase() async {
   try {
@@ -201,4 +201,4 @@ class _TalabakAppState extends State<TalabakApp> {
     );
   }
 }
-
+//#25aa50

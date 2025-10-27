@@ -682,4 +682,4 @@ class _OrdersScreenState extends State<OrdersScreen> with TickerProviderStateMix
 }
 
 // Primary app color (kept as constant in this file)
-const Color kPrimaryColor = Color(0xFFFF5C01);
+const Color kPrimaryColor = Color(0xFF25AA50);
