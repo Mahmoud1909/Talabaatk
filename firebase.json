@@ -1,0 +1,35 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "talabak-33a24",
+          "appId": "1:495352546222:android:e783576182e30ac7023e3f",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "talabak-33a24",
+          "configurations": {
+            "windows": "1:495352546222:web:6e5108985bbed6e8023e3f"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "Y",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

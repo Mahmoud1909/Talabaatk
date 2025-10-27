@@ -1,0 +1,118 @@
+{
+  "project_info": {
+    "project_number": "495352546222",
+    "project_id": "talabak-33a24",
+    "storage_bucket": "talabak-33a24.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:495352546222:android:5592731e2a1bf8bd023e3f",
+        "android_client_info": {
+          "package_name": "com.example.talabaatk_admin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "495352546222-kkf7o7hgq17qvipnr989899r6bpg5jmo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1_0CQmBEjMRA7URYfHzCyHXUQ24a_-_w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "495352546222-kkf7o7hgq17qvipnr989899r6bpg5jmo.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "495352546222-bo88h0b19j1khembnurpg1mm44k7v2he.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.talabak.talabak"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:495352546222:android:a112c9700d951b7b023e3f",
+        "android_client_info": {
+          "package_name": "com.talabaatk.talabaatk"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "495352546222-kkf7o7hgq17qvipnr989899r6bpg5jmo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1_0CQmBEjMRA7URYfHzCyHXUQ24a_-_w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "495352546222-kkf7o7hgq17qvipnr989899r6bpg5jmo.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "495352546222-bo88h0b19j1khembnurpg1mm44k7v2he.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.talabak.talabak"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:495352546222:android:f506b14424b0133b023e3f",
+        "android_client_info": {
+          "package_name": "com.talabak.talabak"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "495352546222-kkf7o7hgq17qvipnr989899r6bpg5jmo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1_0CQmBEjMRA7URYfHzCyHXUQ24a_-_w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "495352546222-kkf7o7hgq17qvipnr989899r6bpg5jmo.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "495352546222-bo88h0b19j1khembnurpg1mm44k7v2he.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.talabak.talabak"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
