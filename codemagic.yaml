@@ -15,6 +15,11 @@ workflows:
           cd ios
           rm -rf Pods Podfile.lock .symlinks
           cd ..
+      - name: Prepare iOS build
+        script: |
+          # Ensure Flutter generates all necessary files
+          flutter pub get
+          # Flutter will upgrade Podfile and inject helper functions during build
       - name: iOS Simulator Build
         script: |
           flutter build ios --simulator
