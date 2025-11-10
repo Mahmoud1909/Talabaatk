@@ -13,7 +13,7 @@ import 'package:talabak_users/firebase_options.dart';
 import 'package:talabak_users/l10n/app_localizations.dart';
 import 'theme/light_theme.dart';
 import 'theme/dark_theme.dart';
-
+//Hi
 const Color kPrimaryColor = Color(0xFF25AA50);
 
 Future<void> ensureSupabaseSessionFromFirebase() async {
