@@ -13,8 +13,6 @@ project 'Runner', {
 target 'Runner' do
   use_frameworks!
   use_modular_headers!
-
-  # Flutter will inject flutter_install_all_ios_pods here during build
 end
 
 post_install do |installer|
