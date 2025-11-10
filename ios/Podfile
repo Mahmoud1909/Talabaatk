@@ -4,6 +4,14 @@ platform :ios, '15.0'
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
+# Load Flutter podspec helper functions
+# Flutter creates these files during pub get
+begin
+  require File.join(File.dirname(__FILE__), 'Flutter', 'podhelper.rb')
+rescue LoadError
+  # If podhelper.rb doesn't exist yet, Flutter will create it during build
+end
+
 project 'Runner', {
   'Debug' => :debug,
   'Profile' => :release,
@@ -13,10 +21,18 @@ project 'Runner', {
 target 'Runner' do
   use_frameworks!
   use_modular_headers!
+
+  # Install all Flutter plugins
+  if defined?(flutter_install_all_ios_pods)
+    flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+  end
 end
 
 post_install do |installer|
   installer.pods_project.targets.each do |target|
+    if defined?(flutter_additional_ios_build_settings)
+      flutter_additional_ios_build_settings(target)
+    end
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
     end
