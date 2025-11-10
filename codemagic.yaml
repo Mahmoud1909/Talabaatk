@@ -15,6 +15,14 @@ workflows:
           cd ios
           rm -rf Pods Podfile.lock .symlinks
           cd ..
+      - name: Prepare iOS build environment
+        script: |
+          flutter precache --ios
+          cd ios
+          # Flutter will upgrade Podfile and inject helper functions
+          # We need to run pod install after Flutter upgrades the Podfile
+          flutter build ios --simulator --no-codesign || true
+          cd ..
       - name: iOS Simulator Build
         script: |
           flutter build ios --simulator
