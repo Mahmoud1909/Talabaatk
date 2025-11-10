@@ -1,22 +1,18 @@
 workflows:
-  ios-workflow:
-    name: iOS Build
+  ios-simulator-build:
+    name: iOS Simulator Build
     max_build_duration: 60
     environment:
       flutter: stable
       xcode: latest
+      cocoapods: default
     scripts:
       - name: Install dependencies
         script: |
           flutter pub get
-          cd ios
-          pod install
-          cd ..
-      - name: Build iOS
-        script: flutter build ios --release
+          flutter pub upgrade
+      - name: iOS Simulator Build
+        script: |
+          flutter build ios --simulator
     artifacts:
-      - build/ios/ipa/*.ipa
-    publishing:
-      email:
-        recipients:
-          - your_email@example.com
+      - build/ios/iphonesimulator/**/*.app
