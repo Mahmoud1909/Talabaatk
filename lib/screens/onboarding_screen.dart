@@ -1,8 +1,9 @@
 // lib/screens/onboarding_screen.dart
+// lib/screens/onboarding_screen.dart
 import 'dart:convert';
 import 'dart:io' show Platform;
 import 'dart:math';
-import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -46,7 +47,7 @@ String _generateNonce([int length = 32]) {
   final random = Random.secure();
   return List.generate(
     length,
-    (_) => charset[random.nextInt(charset.length)],
+        (_) => charset[random.nextInt(charset.length)],
   ).join();
 }
 
@@ -56,10 +57,84 @@ String _sha256ofString(String input) {
   return digest.toString();
 }
 
+/// Decode JWT payload (without verifying) — used to extract email/name from Apple's token if present.
+Map<String, dynamic> _parseJwtPayload(String idToken) {
+  try {
+    final parts = idToken.split('.');
+    if (parts.length != 3) return {};
+    String payload = parts[1];
+
+    // Base64 URL decode with padding fix
+    String normalized = base64Url.normalize(payload);
+    final payloadBytes = base64Url.decode(normalized);
+    final decoded = utf8.decode(payloadBytes);
+    final Map<String, dynamic> payloadMap = json.decode(decoded);
+    return payloadMap;
+  } catch (e) {
+    if (kDebugMode) print('[JWT_PARSE_ERROR] Failed to parse idToken payload: $e');
+    return {};
+  }
+}
+
+/// AppleSignInResult - returned by the service with token + nonce + names if available.
+class AppleSignInResult {
+  final String identityToken;
+  final String rawNonce;
+  final String? givenName;
+  final String? familyName;
+
+  AppleSignInResult({
+    required this.identityToken,
+    required this.rawNonce,
+    this.givenName,
+    this.familyName,
+  });
+}
+
+/// Enhanced AppleSignInService:
+/// - Generates raw nonce + sha256(nonce) and passes nonce to SignInWithApple.
+/// - Returns identityToken + rawNonce + optional names (Apple may provide names only on first auth).
+class AppleSignInService {
+  Future<AppleSignInResult?> signIn() async {
+    try {
+      final rawNonce = _generateNonce();
+      final nonce = _sha256ofString(rawNonce);
+
+      // If running on web the package won't work the same way - the caller
+      // should fall back to Firebase web popup. We return null to let caller
+      // handle web separately. But when running on native iOS, proceed.
+      if (kIsWeb) {
+        if (kDebugMode) print('[AppleSignInService] Running on web: caller should use Firebase popup flow.');
+        return null;
+      }
+
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: nonce, // pass sha256(rawNonce) to Apple for Firebase compatibility
+      );
+
+      if (credential.identityToken == null || credential.identityToken!.isEmpty) {
+        if (kDebugMode) print('[AppleSignInService] No identity token returned from Apple. Possible user cancellation or Apple did not return token.');
+        return null;
+      }
+
+      return AppleSignInResult(
+        identityToken: credential.identityToken!,
+        rawNonce: rawNonce,
+        givenName: credential.givenName,
+        familyName: credential.familyName,
+      );
+    } catch (e) {
+      if (kDebugMode) print('Apple Sign-In failed: $e');
+      return null;
+    }
+  }
+}
 
 Future<UserCredential?> signInWithGoogle() async {
-  // NOTE: This function now throws SignInException for real errors so caller can
-  // display a user-facing message. Returns null when user cancels the flow.
   debugPrint("🚀 [FLOW] Starting Google Sign-In...");
 
   try {
@@ -90,8 +165,6 @@ Future<UserCredential?> signInWithGoogle() async {
           'Unexpected error during Google sign-in (web).',
         );
       }
-
-      // ----- CASE 2: DESKTOP (Windows / macOS / Linux) -----
     } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       debugPrint(
         "[DESKTOP] Detected Desktop platform. Starting desktop OAuth flow...",
@@ -116,7 +189,6 @@ Future<UserCredential?> signInWithGoogle() async {
           return null; // user cancelled -> not an error
         }
 
-        // Basic validation of tokens presence
         if ((result.accessToken == null || result.accessToken!.isEmpty) &&
             (result.idToken == null || result.idToken!.isEmpty)) {
           debugPrint(
@@ -128,7 +200,6 @@ Future<UserCredential?> signInWithGoogle() async {
           );
         }
 
-        // Exchange tokens with Firebase
         try {
           debugPrint(
             "[DESKTOP] Creating Google credential and signing in to Firebase...",
@@ -145,9 +216,7 @@ Future<UserCredential?> signInWithGoogle() async {
             "[DESKTOP] Firebase sign-in successful: ${userCredential.user?.email}",
           );
         } on FirebaseAuthException catch (e, st) {
-          debugPrint(
-            "[DESKTOP][ERROR] Firebase signInWithCredential failed: $e",
-          );
+          debugPrint("[DESKTOP][ERROR] Firebase signInWithCredential failed: $e");
           debugPrint(st.toString());
           throw SignInException(
             'firebase_token_exchange_failed',
@@ -179,8 +248,6 @@ Future<UserCredential?> signInWithGoogle() async {
           'Unexpected error during desktop sign-in.',
         );
       }
-
-      // ----- CASE 3: MOBILE (Android / iOS) -----
     } else {
       debugPrint(
         "[MOBILE] Detected Mobile platform. Opening Google Sign-In via google_sign_in package...",
@@ -198,7 +265,7 @@ Future<UserCredential?> signInWithGoogle() async {
         debugPrint("[MOBILE] Google account selected: ${googleUser.email}");
 
         final GoogleSignInAuthentication googleAuth =
-            await googleUser.authentication;
+        await googleUser.authentication;
 
         final credential = GoogleAuthProvider.credential(
           accessToken: googleAuth.accessToken,
@@ -313,14 +380,12 @@ Future<UserCredential?> signInWithGoogle() async {
   }
 }
 
-// ---------------- Apple Sign-In (new) ----------------
-
 Future<UserCredential?> signInWithApple() async {
   debugPrint("🚀 [FLOW] Starting Apple Sign-In...");
 
   try {
     late UserCredential userCredential;
-    AuthorizationCredentialAppleID? appleCredential;
+    AppleSignInResult? appleResult;
 
     // Web flow: try popup via Firebase OAuthProvider
     if (kIsWeb) {
@@ -341,43 +406,71 @@ Future<UserCredential?> signInWithApple() async {
           e.message ?? 'Failed to sign in with Apple (web).',
         );
       }
-      // iOS native flow
+      // iOS native flow using AppleSignInService
     } else if (Platform.isIOS) {
-      debugPrint("[MOBILE][iOS] Starting native Apple Sign-In...");
-      final rawNonce = _generateNonce();
-      final nonce = _sha256ofString(rawNonce);
+      debugPrint("[MOBILE][iOS] Starting native Apple Sign-In via AppleSignInService...");
+      final appleService = AppleSignInService();
+      final result = await appleService.signIn();
 
-      appleCredential = await SignInWithApple.getAppleIDCredential(
-        scopes: [
-          AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName,
-        ],
-        nonce: nonce,
-      );
+      if (result == null) {
+        // Could be cancellation or a platform issue
+        debugPrint("[MOBILE][iOS][INFO] Apple Sign-In returned null result. Possible user cancellation or missing token.");
+        // Print helpful English messages for debugging:
+        debugPrint("[MOBILE][iOS][EN] Reason: User canceled the Apple Sign-In flow or Apple did not return an identity token.");
+        return null;
+      }
 
-      if (appleCredential.identityToken == null ||
-          appleCredential.identityToken!.isEmpty) {
-        debugPrint("[MOBILE][iOS][ERROR] No identity token from Apple.");
+      // Validate token presence
+      if (result.identityToken.isEmpty) {
+        debugPrint("[MOBILE][iOS][ERROR] No identity token from Apple. Aborting sign-in.");
+        debugPrint("[MOBILE][iOS][EN] Reason: Apple returned an empty identity token. This may happen if the user denied permission or Apple's response was malformed.");
         throw SignInException(
           'no_token',
           'No identity token returned from Apple.',
         );
       }
 
-      final oauthCredential = OAuthProvider(
-        "apple.com",
-      ).credential(idToken: appleCredential.identityToken, rawNonce: rawNonce);
+      // Try to decode token payload to extract any available claims (email, name, etc.)
+      final claims = _parseJwtPayload(result.identityToken);
+      if (kDebugMode) {
+        print('[APPLE][JWT_CLAIMS] Claims: $claims');
+      }
 
-      userCredential = await FirebaseAuth.instance.signInWithCredential(
-        oauthCredential,
-      );
-      debugPrint(
-        "[MOBILE][iOS] Firebase sign-in successful: ${userCredential.user?.email}",
-      );
+      // If email not present in claims, warn (Apple sometimes hides email)
+      if (!claims.containsKey('email') || (claims['email'] ?? '').toString().isEmpty) {
+        debugPrint("[MOBILE][iOS][WARN] Decoded identity token has no email claim. Apple may have hidden the user's email.");
+        debugPrint("[MOBILE][iOS][EN] Reason: Email missing from token. Apple only includes email on first sign-in or when user allows sharing their email.");
+      }
+
+      // Exchange token with Firebase using rawNonce that we generated in service
+      try {
+        final oauthCredential = OAuthProvider("apple.com").credential(
+          idToken: result.identityToken,
+          rawNonce: result.rawNonce,
+        );
+
+        userCredential = await FirebaseAuth.instance.signInWithCredential(oauthCredential);
+        debugPrint("[MOBILE][iOS] Firebase sign-in successful: ${userCredential.user?.email}");
+        appleResult = result;
+      } on FirebaseAuthException catch (e, st) {
+        debugPrint("[MOBILE][iOS][ERROR] Firebase signInWithCredential failed: $e");
+        debugPrint(st.toString());
+        // Helpful english console messages
+        debugPrint("[MOBILE][iOS][EN] Reason: Firebase failed to verify the Apple credential. Check that the nonce used matches the one expected by Firebase and that the Apple identity token is valid.");
+        throw SignInException(
+          'firebase_token_exchange_failed',
+          'Failed to sign in with the provided Apple credential.',
+        );
+      } catch (e, st) {
+        debugPrint("[MOBILE][iOS][ERROR] Unexpected error exchanging tokens: $e");
+        debugPrint(st.toString());
+        throw SignInException(
+          'apple_unexpected',
+          'Unexpected error during Apple sign-in.',
+        );
+      }
     } else {
-      debugPrint(
-        "[PLATFORM] Apple Sign-In not supported on this platform in current implementation.",
-      );
+      debugPrint("[PLATFORM] Apple Sign-In not supported on this platform in current implementation.");
       throw SignInException(
         'platform_not_supported',
         'Apple Sign-In supported on iOS and Web only.',
@@ -385,11 +478,10 @@ Future<UserCredential?> signInWithApple() async {
     }
 
     // Common post sign-in
+    debugPrint("🔥 [COMMON] Firebase authentication flow completed (apple).");
     final user = userCredential.user;
     if (user == null) {
-      debugPrint(
-        "[COMMON][ERROR] No Firebase user returned after Apple sign-in.",
-      );
+      debugPrint("[COMMON][ERROR] No Firebase user returned after Apple sign-in.");
       throw SignInException(
         'no_user',
         'No Firebase user returned after sign-in.',
@@ -444,18 +536,24 @@ Future<UserCredential?> signInWithApple() async {
         lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
       }
 
-      // If we have appleCredential (iOS) and it provided names, prefer them (only available first time)
-      if (appleCredential != null) {
-        final given = appleCredential.givenName;
-        final family = appleCredential.familyName;
-        if (given != null && given.trim().isNotEmpty) firstName = given.trim();
-        if (family != null && family.trim().isNotEmpty)
-          lastName = family.trim();
+      // If appleResult exists and provided names (only available on first sign-in), prefer them
+      if (appleResult != null) {
+        if (appleResult.givenName != null && appleResult.givenName!.trim().isNotEmpty) {
+          firstName = appleResult.givenName!.trim();
+        }
+        if (appleResult.familyName != null && appleResult.familyName!.trim().isNotEmpty) {
+          lastName = appleResult.familyName!.trim();
+        }
       }
+
+      // Also attempt to use email from idToken claims if Firebase user.email is null
+      final claims = _parseJwtPayload(appleResult?.identityToken ?? '');
+      final tokenEmail = claims['email'] as String?;
+      final emailToUpsert = (user.email?.isNotEmpty == true) ? user.email : tokenEmail;
 
       final upsertResponse = await supabaseClient.from('customers').upsert({
         'auth_uid': user.uid,
-        'email': user.email,
+        'email': emailToUpsert,
         'first_name': firstName,
         'last_name': lastName,
         'photo_url': '', // Apple doesn't supply photo
@@ -477,7 +575,6 @@ Future<UserCredential?> signInWithApple() async {
     );
   }
 }
-
 
 Future<void> syncFirebaseWithSupabase() async {
   final user = FirebaseAuth.instance.currentUser;
@@ -541,7 +638,6 @@ class OnboardingScreen extends StatefulWidget {
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
-
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
@@ -1695,41 +1791,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 }
-
-Widget _buildFlagOption(
-  String flagEmoji,
-  String code,
-  String countryCode,
-  String selectedCode,
-  void Function(void Function()) setState,
-)
-{
-  return GestureDetector(
-    onTap: () {
-      setState(() {
-        selectedCode = code;
-      });
-    },
-    child: Container(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-      decoration: BoxDecoration(
-        color: selectedCode == code
-            ? Colors.white.withOpacity(0.2)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Text(flagEmoji, style: const TextStyle(fontSize: 18)),
-          const SizedBox(width: 6),
-          Text(code, style: const TextStyle(color: Colors.white, fontSize: 14)),
-        ],
-      ),
-    ),
-  );
-}
-
 class _DebugExpandableDetails extends StatefulWidget {
   final String details;
 
@@ -1797,4 +1858,38 @@ class _DebugExpandableDetailsState extends State<_DebugExpandableDetails> {
       ],
     );
   }
+}
+
+Widget _buildFlagOption(
+    String flagEmoji,
+    String code,
+    String countryCode,
+    String selectedCode,
+    void Function(void Function()) setState,
+    )
+{
+  return GestureDetector(
+    onTap: () {
+      setState(() {
+        selectedCode = code;
+      });
+    },
+    child: Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+      decoration: BoxDecoration(
+        color: selectedCode == code
+            ? Colors.white.withOpacity(0.2)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Text(flagEmoji, style: const TextStyle(fontSize: 18)),
+          const SizedBox(width: 6),
+          Text(code, style: const TextStyle(color: Colors.white, fontSize: 14)),
+        ],
+      ),
+    ),
+  );
 }
