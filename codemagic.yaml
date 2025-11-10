@@ -12,6 +12,9 @@ workflows:
           flutter clean
           flutter pub get
           flutter pub upgrade
+          cd ios
+          rm -rf Pods Podfile.lock .symlinks
+          cd ..
       - name: iOS Simulator Build
         script: |
           flutter build ios --simulator
