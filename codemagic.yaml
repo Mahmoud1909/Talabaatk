@@ -15,12 +15,6 @@ workflows:
           cd ios
           rm -rf Pods Podfile.lock .symlinks
           cd ..
-      - name: Prepare iOS build
-        script: |
-          flutter precache --ios
-          cd ios
-          pod install --repo-update
-          cd ..
       - name: iOS Simulator Build
         script: |
           flutter build ios --simulator
